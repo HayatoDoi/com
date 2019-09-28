@@ -16,10 +16,10 @@ function sirial() {
     $c.DtrEnable = $true
     $c.RtsEnable = $true
 
-    # ハンドシェイク無し
+    # no handshake
     $c.Handshake=[System.IO.Ports.Handshake]::None
 
-    # 改行文字を設定
+    # set new line
     if ($newLine -eq "CR+LF") {
         $c.NewLine = "`r`n"
     }
@@ -30,11 +30,11 @@ function sirial() {
         $c.NewLine = "`r"
     }
 
-    # 文字コードを設定
+    # set test code
     $c.Encoding=[System.Text.Encoding]::GetEncoding($encoding)
     
-    # シリアル受信イベントを登録
-    # 受信したらエスケープを判断してコンソールに出力
+    # Register serial receive event
+    # when received, output to console 
     [Boolean] $inFunStrFlag = $FALSE
     [String] $funStr = ""
     $d = Register-ObjectEvent -InputObject $c -EventName "DataReceived" -Action {
@@ -63,9 +63,9 @@ function sirial() {
                         Write-Host -NoNewline (" " * $num)
                         [System.Console]::SetCursorPosition($cursorLeft - $num, $cursorTop)
                     }
+                    # $dORj -eq "D"
                     else {
-                        # todo: 問題があれば修正を行う
-                        # 自分の環境ではESC[0J以外出力されないため未対応
+                        # todo: fix
                         [System.Console]::SetCursorPosition($cursorLeft, $cursorTop - $num)
                     }
                     $inFunStrFlag = $FALSE
@@ -78,7 +78,7 @@ function sirial() {
         }
     }
     Try {
-        # COMポートを開く
+        # open com port
         $c.Open()
     }
     Catch {
