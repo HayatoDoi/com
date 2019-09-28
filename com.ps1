@@ -1,17 +1,29 @@
+#!/usr/bin/env pwsh
 
-# default params
-[string] $newLine  = "CR" # CR(default), CR+LF, LF
-[string] $encoding = "UTF-8" # UTF-8(default), UTF-16, Shift_JIS
-[int] $portSpeed   = 9600
+$params = @{
+    "newLine" = @{
+        "value" = [string] "CR" # CR(default), CR+LF, LF
+        "value_regex" = [string] "^((CR)|(CR\+LF)|(LF))$"
+    }
+    "encoding" = @{
+        "value" = [string] "UTF-8" # UTF-8(default), UTF-16, Shift_JIS
+        "value_regex" = [string] "^((UTF\-8)|(UTF\-16)|(Shift_JIS))$"
+    }
+    "portSpeed" = @{
+        "value" = [int] 9600
+        "value_regex" = [string] "^\d*$"
+    }
+    "comNum" = @{
+        "value" = [string] ""
+        "value_regex" = [string] "^((com)|(COM))\d$"
+    }
+}
 
-[double] $version = 1.0
+[double] $version = 1.1
 [string] $copyright = "(c) 2019, Hayato Doi."
-function sirial() {
-    param (
-        $comNum
-    )
+function sirialStart() {
 
-    $c = New-Object System.IO.Ports.SerialPort $comNum, $portSpeed, ([System.IO.Ports.Parity]::None)
+    $c = New-Object System.IO.Ports.SerialPort $params["comNum"]["value"], $params["portSpeed"]["value"], ([System.IO.Ports.Parity]::None)
 
     $c.DtrEnable = $true
     $c.RtsEnable = $true
@@ -20,10 +32,10 @@ function sirial() {
     $c.Handshake=[System.IO.Ports.Handshake]::None
 
     # set new line
-    if ($newLine -eq "CR+LF") {
+    if ($params["newLine"]["value"] -eq "CR+LF") {
         $c.NewLine = "`r`n"
     }
-    elseif ($newLine -eq "LF") {
+    elseif ($params["newLine"]["value"] -eq "LF") {
         $c.NewLine = "`n"
     }
     else {
@@ -31,7 +43,7 @@ function sirial() {
     }
 
     # set test code
-    $c.Encoding=[System.Text.Encoding]::GetEncoding($encoding)
+    $c.Encoding=[System.Text.Encoding]::GetEncoding($params["encoding"]["value"])
     
     # Register serial receive event
     # when received, output to console 
@@ -111,24 +123,122 @@ function sirial() {
 function comList {
     (Get-WmiObject -query "SELECT * FROM Win32_PnPEntity" | Where {$_.Name -Match "COM\d+"}).name
 }
+function setParam {
+    param (
+        [string] $key,
+        [string] $value
+    )
+    foreach($param in $params.GetEnumerator()){
+        if ($key -eq $param.Key -and $value -match $param.Value["value_regex"]){
+            $param.Value["value"] = $value
+            return
+        }
+    }
+    throw "error"
+}
+function checkParam {
+    foreach($param in $params.GetEnumerator()){
+        if (!($param.Value["value"] -match $param.Value["value_regex"])){
+            throw "error"
+        }
+    }
+}
+function debugPrintPrams {
+    Write-Host "Key       Value"
+    foreach($param in $params.GetEnumerator()){
+        Write-Host $param.key"       "$param.Value["value"]
+    }
+}
+function loadIniFile {
+    param (
+        [string] $filepath
+    )
+    Get-Content $filepath | `
+        where-object {($_ -notmatch '^\s*$') -and (!($_.TrimStart().StartsWith(";")))} | foreach {
+            $param = $_.split("=", 2)
+            try {
+                setParam $param[0] $param[1]
+            }
+            catch {
+                error "can't load config file"
+            }
+    }
+}
 function printVersion {
     Write-Host("com command. ver {0:f2}" -f $version)
     Write-Host "$copyright"
 }
+function printHelp {
+    Write-Host "Usage: com [COM_PORT] [OPTION]... "
+    Write-Host ""
+    Write-Host "[OPTION]"
+    Write-Host -NoNewline "ls, list                      "
+    Write-Host "Show com port list."
+    Write-Host -NoNewline "-c, --config <cofnig file>    "
+    Write-Host "Load config file."
+    Write-Host -NoNewline "-v, --version                 "
+    Write-Host "Show version."
+    Write-Host -NoNewline "-h, --help                    "
+    Write-Host "Show help."
+    Write-Host ""
+    Write-Host "$copyright"
+}
+
+function error {
+    param (
+        [string] $message
+    )
+    Write-Host $message
+    exit 1
+}
+
+function argumentError {
+    error "argument error.`nTry 'com --help' for more information."
+}
 #--- main start ---
 # args check
-If($args.Length -eq 1){
-    if($args[0] -match "^com\d$"){
-        sirial $args[0]
-        exit
+for ($i = 0; $i -lt $args.Count; $i++) {
+    if($args[$i] -match $params["comNum"]["value_regex"]){
+        $params["comNum"]["value"] = $args[$i]
     }
-    elseif ($args[0] -match "^((list)|(ls))$") {
+    elseif ($args[$i] -match "^((\-\-config)|(\-c))$") {
+        if ($i++ -ge $args.Count){
+            argumentError
+        }
+        loadIniFile $args[$i]
+        # $i++
+    }
+    elseif ($args[$i] -match "^((list)|(ls))$") {
+        if ($args.Count -ne 1) {
+            argumentError
+        }
         comList
         exit
     }
-    elseif ($args[0] -match "^version$") {
+    elseif ($args[$i] -match "((^\-\-version)|(\-v))$") {
+        if ($args.Count -ne 1) {
+            argumentError
+        }
         printVersion
         exit
     }
+    elseif ($args[$i] -match "((^\-\-help)|(\-h))$") {
+        if ($args.Count -ne 1) {
+            argumentError
+        }
+        printHelp
+        exit
+    }
+    else {
+        argumentError
+    }
 }
-Write-Host "argument error"
+
+try {
+    checkParam
+}
+catch {
+    argumentError   
+}
+
+sirialStart
