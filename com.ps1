@@ -262,7 +262,6 @@ for ($i = 0; $i -lt $args.Count; $i++) {
 }
 
 try {
-    debugPrintPrams
     checkParam
 }
 catch {
