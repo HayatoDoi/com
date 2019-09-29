@@ -19,7 +19,7 @@ $params = @{
     }
 }
 
-[double] $version = 1.1
+[double] $version = 1.2
 [string] $copyright = "(c) 2019, Hayato Doi."
 function sirialStart() {
 
@@ -169,18 +169,34 @@ function printVersion {
     Write-Host "$copyright"
 }
 function printHelp {
+    [int] $totalWidth = 30
     Write-Host "Usage: com [COM_PORT] [OPTION]... "
     Write-Host ""
+    Write-Host "[COM_PORT]"
+    Write-Host "You can get it by `"com ls`" command."
+    Write-Host ""
     Write-Host "[OPTION]"
-    Write-Host -NoNewline "ls, list                      "
+    Write-Host -NoNewline "ls, list".PadRight($totalWidth)
     Write-Host "Show com port list."
-    Write-Host -NoNewline "-c, --config <cofnig file>    "
+    Write-Host -NoNewline "--newLine <new line>".PadRight($totalWidth)
+    Write-Host "Set new line. ( CR(default), CR+LF, LF )"
+    Write-Host -NoNewline "--encoding <encoding>".PadRight($totalWidth)
+    Write-Host "Set encoding. ( UTF-8(default), UTF-16, Shift_JIS )"
+    Write-Host -NoNewline "--portSpeed <portSpeed>".PadRight($totalWidth)
+    Write-Host "Set port speed. ( 9600(default) )"
+    Write-Host -NoNewline "-c, --config <cofnig file>".PadRight($totalWidth)
     Write-Host "Load config file."
-    Write-Host -NoNewline "-v, --version                 "
+    Write-Host -NoNewline "-v, --version".PadRight($totalWidth)
     Write-Host "Show version."
-    Write-Host -NoNewline "-h, --help                    "
+    Write-Host -NoNewline "-h, --help".PadRight($totalWidth)
     Write-Host "Show help."
     Write-Host ""
+    Write-Host "[Example]"
+    Write-Host "> com ls"
+    Write-Host "USB Serial Port (COM3)"
+    Write-Host "> com COM3"
+    Write-Host "# start sirial..."
+    Write-Host "".PadRight($totalWidth, "-")
     Write-Host "$copyright"
 }
 
@@ -200,6 +216,17 @@ function argumentError {
 for ($i = 0; $i -lt $args.Count; $i++) {
     if($args[$i] -match $params["comNum"]["value_regex"]){
         $params["comNum"]["value"] = $args[$i]
+    }
+    elseif ($args[$i] -match "^((\-\-newLine)|(\-\-encoding)|(\-\-portSpeed))$") {
+        if ($i++ -ge $args.Count){
+            argumentError
+        }
+        try {
+            setParam $args[$i-1].Remove(0, 2) $args[$i]
+        }
+        catch {
+            argumentError
+        }
     }
     elseif ($args[$i] -match "^((\-\-config)|(\-c))$") {
         if ($i++ -ge $args.Count){
@@ -235,6 +262,7 @@ for ($i = 0; $i -lt $args.Count; $i++) {
 }
 
 try {
+    debugPrintPrams
     checkParam
 }
 catch {
