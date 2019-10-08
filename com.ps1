@@ -19,7 +19,7 @@ $params = @{
     }
 }
 
-[double] $version = 1.2
+[double] $version = 1.3
 [string] $copyright = "(c) 2019, Hayato Doi."
 function sirialStart() {
 
@@ -64,21 +64,24 @@ function sirialStart() {
                 else {
                     $funStr += $_
                 }
-                if ($funStr -match "^ESC\[\d*(D|J)$"){
+                if ($funStr -match "^ESC\[\d*(D|J|C)$"){
                     [string] $noEscStr = $funStr -replace "^ESC\["
-                    [int] $num = $noEscStr -replace "(D|J)"
+                    [int] $num = $noEscStr -replace "(D|J|C)"
                     [string] $dORj = $noEscStr -replace "\d*"
                     $cursorLeft =  [System.Console]::CursorLeft
                     $cursorTop = [System.Console]::CursorTop
-                    if ($dORj -eq "D") {
-                        [System.Console]::SetCursorPosition($cursorLeft - $num, $cursorTop)
-                        Write-Host -NoNewline (" " * $num)
+                    if ($dORj -eq "C") {
+                        [System.Console]::SetCursorPosition($cursorLeft + $num, $cursorTop)
+                    }
+                    elseif ($dORj -eq "D") {
                         [System.Console]::SetCursorPosition($cursorLeft - $num, $cursorTop)
                     }
-                    # $dORj -eq "D"
+                    # $dORj -eq "J"
                     else {
-                        # todo: fix
-                        [System.Console]::SetCursorPosition($cursorLeft, $cursorTop - $num)
+                        if ($num -eq 0) {
+                            Write-Host -NoNewline (" " * ([System.Console]::WindowHeight - $cursorLeft) )
+                            [System.Console]::SetCursorPosition($cursorLeft, $cursorTop)
+                        }
                     }
                     $inFunStrFlag = $FALSE
                     $funStr = ""
@@ -106,6 +109,12 @@ function sirialStart() {
                 }
                 elseif ($keyinfo.Key -eq "DownArrow") {
                     $c.Write((0x1B,0x5B,0x42),0,3)
+                }
+                elseif ($keyinfo.Key -eq "RightArrow") {
+                    $c.Write((0x1B,0x5B,0x43),0,3)
+                }
+                elseif ($keyinfo.Key -eq "LeftArrow") {
+                    $c.Write((0x1B,0x5B,0x44),0,3)
                 }
                 else{
                     $c.Write($keyinfo.KeyChar)
