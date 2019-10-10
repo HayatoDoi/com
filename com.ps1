@@ -15,7 +15,7 @@ $params = @{
     }
     "comNum" = @{
         "value" = [string] ""
-        "value_regex" = [string] "^((com)|(COM))\d$"
+        "value_regex" = [string] "^((com)|(COM))\d+$"
     }
 }
 
