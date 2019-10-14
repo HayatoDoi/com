@@ -1,5 +1,7 @@
 #!/usr/bin/env pwsh
 
+[console]::TreatControlCAsInput = $true
+
 $params = @{
     "newLine" = @{
         "value" = [string] "CR" # CR(default), CR+LF, LF
@@ -19,7 +21,7 @@ $params = @{
     }
 }
 
-[double] $version = 1.3
+[double] $version = 1.4
 [string] $copyright = "(c) 2019, Hayato Doi."
 function sirialStart() {
 
@@ -95,16 +97,14 @@ function sirialStart() {
     Try {
         # open com port
         $c.Open()
-    }
-    Catch {
-        Write-Host $_.Exception.Message
-        exit
-    }
-    Try {
         for (;;) {
             if ([Console]::KeyAvailable){
                 $keyinfo = [Console]::ReadKey($true)
-                if ($keyinfo.Key -eq "UpArrow" ) {
+                if (($keyinfo.modifiers -band [consolemodifiers]"control") -and
+                ($keyinfo.key -eq "D")) {
+                    break
+                }
+                elseif ($keyinfo.Key -eq "UpArrow" ) {
                     $c.Write((0x1B,0x5B,0x41),0,3)
                 }
                 elseif ($keyinfo.Key -eq "DownArrow") {
@@ -121,6 +121,9 @@ function sirialStart() {
                 }
             }
         }
+    }
+    Catch {
+        Write-Host $_.Exception.Message
     }
     Finally {
         Write-Host "`nbye."
