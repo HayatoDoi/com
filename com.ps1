@@ -100,9 +100,19 @@ function sirialStart() {
         for (;;) {
             if ([Console]::KeyAvailable){
                 $keyinfo = [Console]::ReadKey($true)
-                if (($keyinfo.modifiers -band [consolemodifiers]"control") -and
-                ($keyinfo.key -eq "D")) {
-                    break
+                if ($keyinfo.modifiers -band [consolemodifiers]"control") {
+                    if ($keyinfo.key -eq "L") {
+                        $cursorPositionX = $Host.UI.RawUI.CursorPosition.X
+                        $cursorPositionY = $Host.UI.RawUI.CursorPosition.Y
+                        [Console]::SetCursorPosition(0,$Host.UI.RawUI.BufferSize.Height-1)
+                        [Console]::SetCursorPosition($cursorPositionX, $cursorPositionY)
+                    }
+                    elseif ($keyinfo.key -eq "D") {
+                        break
+                    }
+                    else {
+                        $c.Write($keyinfo.KeyChar)
+                    }
                 }
                 elseif ($keyinfo.Key -eq "UpArrow" ) {
                     $c.Write((0x1B,0x5B,0x41),0,3)
