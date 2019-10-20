@@ -82,7 +82,7 @@ function sirialStart() {
                     # $dORj -eq "J"
                     else {
                         if ($num -eq 0) {
-                            Write-Host -NoNewline (" " * ([System.Console]::WindowHeight - $cursorLeft) )
+                            Write-Host -NoNewline (" " * ($Host.UI.RawUI.BufferSize.Width - $cursorLeft))
                             [System.Console]::SetCursorPosition($cursorLeft, $cursorTop)
                         }
                     }
