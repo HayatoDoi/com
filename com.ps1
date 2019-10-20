@@ -19,9 +19,10 @@ $params = @{
         "value" = [string] ""
         "value_regex" = [string] "^((com)|(COM))\d+$"
     }
+    "oldWindowTitle" = ""
 }
 
-[double] $version = 1.6
+[double] $version = 1.7
 [string] $copyright = "(c) 2019, Hayato Doi."
 function sirialStart() {
 
@@ -97,6 +98,10 @@ function sirialStart() {
     Try {
         # open com port
         $c.Open()
+
+        # update windows title
+        $params["oldWindowTitle"] = $host.ui.RawUI.WindowTitle
+        $host.ui.RawUI.WindowTitle = "console(" + $params["comNum"]["value"] + ")"
         for (;;) {
             if ([Console]::KeyAvailable){
                 $keyinfo = [Console]::ReadKey($true)
@@ -140,6 +145,7 @@ function sirialStart() {
         $c.Close()
         Unregister-Event $d.Name
         Remove-Job $d.Id
+        $host.ui.RawUI.WindowTitle = $params["oldWindowTitle"]
     }
 }
 function comList {
