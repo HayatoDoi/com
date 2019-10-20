@@ -21,7 +21,7 @@ $params = @{
     }
 }
 
-[double] $version = 1.5
+[double] $version = 1.6
 [string] $copyright = "(c) 2019, Hayato Doi."
 function sirialStart() {
 
@@ -81,7 +81,7 @@ function sirialStart() {
                     # $dORj -eq "J"
                     else {
                         if ($num -eq 0) {
-                            Write-Host -NoNewline (" " * ([System.Console]::WindowHeight - $cursorLeft) )
+                            Write-Host -NoNewline (" " * ($Host.UI.RawUI.BufferSize.Width - $cursorLeft))
                             [System.Console]::SetCursorPosition($cursorLeft, $cursorTop)
                         }
                     }
