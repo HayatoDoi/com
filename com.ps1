@@ -21,7 +21,7 @@ $params = @{
     }
 }
 
-[double] $version = 1.5
+[double] $version = 1.6
 [string] $copyright = "(c) 2019, Hayato Doi."
 function sirialStart() {
 
