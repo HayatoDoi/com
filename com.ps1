@@ -22,7 +22,7 @@ $params = @{
     "oldWindowTitle" = ""
 }
 
-[double] $version = 1.5
+[double] $version = 1.7
 [string] $copyright = "(c) 2019, Hayato Doi."
 function sirialStart() {
 
